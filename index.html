@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BestOfficial</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<!-- v9 (29.07) — ЗАФИКСИРОВАНО как стандарт BestOfficial стиля/дизайна (прямое слово Создателя).
+     Не плетёное кольцо — кольцо из ~2200 дрейфующих частиц космической пыли, форма читается
+     плотностью, не линией; внутренние частицы обращаются быстрее внешних; глубина — через
+     яркость/цвет по близости к радиусу кольца; палитра — золото (best), покой. Без shadowBlur на
+     частицах (дорогая операция — см. sparticles на GitHub), свечение из естественного наложения
+     частиц. Слово — BestOfficial, тот же золотой хром-шрифт. Предыдущие шаги —
+     .freexofficial.v5/v6/v7/v8-backup.html. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --word-c1:#fff8d0; --word-c2:#fff1a8; --word-c3:#ffd558; --word-c4:#e8b840; --word-c5:#b8822c;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; overflow:hidden; background:#000; }
+  body{ display:flex; align-items:center; justify-content:center; }
+
+  .stage{ position:relative; width:min(88vmin, 980px); aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+  .stage canvas{ position:absolute; inset:0; width:100%; height:100%; }
+
+  h1{
+    position:relative; z-index:2;
+    margin:0;
+    opacity:0;
+    animation: word-in 1.6s cubic-bezier(.16,.9,.25,1) 0.15s forwards;
+    font-family:"Alex Brush", "Segoe Script", "Brush Script MT", cursive;
+    text-transform:none; font-weight:400;
+    font-size:clamp(3.2rem, 12.5vw, 8.4rem);
+    letter-spacing:0; line-height:1; white-space:nowrap;
+    background:linear-gradient(160deg,
+      var(--word-c1) 0%, #fffef2 6%, var(--word-c2) 14%,
+      var(--word-c4) 27%, #8a5a18 36%,
+      #fffef2 46%, var(--word-c3) 56%,
+      var(--word-c5) 68%, #7a4c1c 76%,
+      #fff6d8 86%, var(--word-c3) 94%, var(--word-c5) 100%);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent; -webkit-text-fill-color:transparent;
+    -webkit-text-stroke: 1px rgba(50,26,0,0.85);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    filter:
+      brightness(1.22) saturate(1.15)
+      drop-shadow(0 0 1px rgba(255,255,245,1))
+      drop-shadow(0 0 3px rgba(255,220,130,0.4))
+      drop-shadow(0 -1px 0 rgba(255,250,225,0.6))
+      drop-shadow(0 6px 14px rgba(0,0,0,0.7));
+  }
+  /* блик (зеркальный проход по слову) убран по слову Создателя — h1::after больше не рисуется */
+  @keyframes word-in{
+    from{ opacity:0; transform:translateY(14px) scale(0.97); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  @supports not (background-clip: text){
+    h1{ color:#ffc928; -webkit-text-fill-color:#ffc928; background:none; }
+    h1::after{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    h1::after{ animation:none; }
+    h1{ opacity:1; animation:none; }
+  }
+
+</style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="torCanvas"></canvas>
+    <h1 data-text="BestOfficial">BestOfficial</h1>
+  </div>
+
+<script>
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function seeded(i){ var x = Math.sin(i*12.9898)*43758.5453; return x - Math.floor(x); }
+
+  var canvas = document.getElementById('torCanvas');
+  var ctx = canvas.getContext('2d');
+  var w, h, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize(){
+    w = canvas.parentElement.clientWidth; h = canvas.parentElement.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    canvas.style.width = w+'px'; canvas.style.height = h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Все именованные торы экосистемы — те же палитры, что и в самом Desktop\freex\freex-vision.html
+  // (GT + CHILD_GT: Freex/Я/AI/BEST/Odp). Только имя и цвет каждого — геометрия одна, общая.
+  var GT_OUTER = 0.42, GT_INNER = 0.84;
+  var WORLDS = {
+    freex: ['255,255,255', '242,242,246', '214,214,222', '160,160,172', '96,96,108',  '44,44,52'],
+    ya:    ['235,255,225', '190,240,170', '120,215,95',  '55,150,45',   '25,85,20',   '8,35,8'],
+    ai:    ['60,60,68',    '40,40,46',    '26,26,30',    '16,16,18',    '8,8,10',     '2,2,3'],
+    best:  ['255,244,176', '255,216,74',  '255,179,0',   '242,138,0',   '185,90,0',   '90,38,0'],
+    odp:   ['225,240,255', '170,210,250', '90,160,235',  '40,100,190',  '20,55,110',  '6,18,40']
+  };
+  var WORLD_ORDER = ['freex','ya','ai','best','odp'];
+  var worldIdx = 3; // покой — золото (best), не серебро
+  var TRANS_MS = 850;
+  var curPalette = WORLDS.best.slice();
+  var transFrom = WORLDS.best, transTo = WORLDS.best, transStart = -1e9, lastT = 0;
+  var pageStart = null; // отметка первого кадра — от неё считаем разгорание
+  function lerpPalette(p1, p2, p){
+    var out = [];
+    for(var i=0;i<p1.length;i++){
+      var a = p1[i].split(',').map(Number), b = p2[i].split(',').map(Number);
+      out.push(Math.round(a[0]+(b[0]-a[0])*p)+','+Math.round(a[1]+(b[1]-a[1])*p)+','+Math.round(a[2]+(b[2]-a[2])*p));
+    }
+    return out;
+  }
+  var wordEl = document.getElementById('torCanvas').parentElement.querySelector('h1');
+  wordEl.style.cursor = 'pointer';
+  wordEl.addEventListener('click', function(){
+    worldIdx = (worldIdx+1) % WORLD_ORDER.length;
+    transFrom = curPalette; transTo = WORLDS[WORLD_ORDER[worldIdx]];
+    transStart = reduced ? (lastT - TRANS_MS - 1) : lastT;
+    if(reduced){ draw(lastT); }
+  });
+
+  // ВАРИАНТ C — не плетёное кольцо, а кольцо из космической пыли: тысячи отдельных дрейфующих
+  // частиц, форма кольца читается плотностью, не линией. Ближе к кольцам планеты/галактике
+  // сверху, чем к шнуру. Внутренние частицы обращаются заметно быстрее внешних (差 Kepler-подобно).
+  var P_N = reduced ? 260 : 2200;
+  var particles = [];
+  for(var pi=0; pi<P_N; pi++){
+    // Плотность выше у радиуса кольца, к центру и наружу — мягкий, естественный спад, не жёсткий край.
+    var band = (seeded(pi*5+1) + seeded(pi*5+2) + seeded(pi*5+3) + seeded(pi*5+4))/4; // ~нормальное распределение 0..1
+    particles.push({
+      angle0: seeded(pi*5+11)*Math.PI*2,
+      radiusU: band, // 0..1, потом маппится в реальный радиус
+      speed: 0.00006 + seeded(pi*5+13)*0.00004,
+      size: seeded(pi*5+17) > 0.92 ? (1.6+seeded(pi*5+19)*1.6) : (0.5+seeded(pi*5+19)*0.9),
+      twPhase: seeded(pi*5+23)*Math.PI*2,
+      twSpeed: 0.0006+seeded(pi*5+29)*0.0012,
+      colorBias: seeded(pi*5+31)
+    });
+  }
+  var CORE, BRIGHT;
+
+  function draw(t){
+    lastT = t;
+    if (pageStart === null) pageStart = t;
+    // По просьбе — показываем сразу финальный уровень (максимум), без разгорания.
+    // Разгорание оставлено в коде закомментированным, легко вернуть.
+    var igniteMul = 1;
+    if (false) {
+      var el = t - pageStart;
+      var BASE = 0.42;
+      if (el <= 4000) {
+        igniteMul = BASE;
+      } else {
+        var ignP = Math.min(1, (el-4000)/6000);
+        var eased = ignP*ignP*(3-2*ignP); // smoothstep
+        igniteMul = BASE + (1-BASE)*eased;
+      }
+    }
+
+    var transP = Math.min(1, (t - transStart) / TRANS_MS);
+    curPalette = transP >= 1 ? transTo : lerpPalette(transFrom, transTo, transP);
+    CORE = curPalette[0]; BRIGHT = curPalette[1];
+    ctx.clearRect(0,0,w,h);
+    var cx=w/2, cy=h/2, minDim = Math.min(w,h);
+    var outerR = minDim*GT_OUTER, innerR = outerR*GT_INNER;
+    var bandHalf = (outerR-innerR)/2;
+    var ringR = innerR + bandHalf;
+    var spread = bandHalf*3.4; // диск шире тонкой полосы — читается объёмом, не линией
+
+    // Профессиональная деталь из реального опенсорса (см. источники в чате): per-particle
+    // shadowBlur — дорогая операция на тысячах частиц. Свечение вместо этого получаем из
+    // самого перекрытия множества полупрозрачных частиц (естественный bloom), без shadowBlur.
+    ctx.save();
+    particles.forEach(function(p){
+      var r = ringR + (p.radiusU-0.5)*2*spread;
+      if (r < innerR*0.15) return; // держим центр пустым — портал, не залитый круг
+      // Внутренние частицы обращаются быстрее внешних — живое, не единое вращение.
+      var angSpeed = p.speed * (ringR/Math.max(r, ringR*0.3));
+      var ang = p.angle0 + t*angSpeed;
+      var x = cx + Math.cos(ang)*r, y = cy + Math.sin(ang)*r*0.985;
+      var tw = 0.5 + 0.5*Math.max(0, Math.sin(t*p.twSpeed + p.twPhase));
+      // Цвет/яркость зависят от того, насколько частица близко к точному радиусу кольца —
+      // так глубина выражена цветом и светом, а не отдельным слоем поверх.
+      var closeness = 1 - Math.min(1, Math.abs(r-ringR)/spread);
+      var idx = (p.colorBias*0.4 + (1-closeness)*0.6) * (curPalette.length-1);
+      var i0 = Math.floor(idx), i1 = Math.min(curPalette.length-1, i0+1), fp = idx-i0;
+      var a = curPalette[i0].split(',').map(Number), b = curPalette[i1].split(',').map(Number);
+      var col = Math.round(a[0]+(b[0]-a[0])*fp)+','+Math.round(a[1]+(b[1]-a[1])*fp)+','+Math.round(a[2]+(b[2]-a[2])*fp);
+      var alpha = (0.22 + 0.85*closeness) * (0.55+0.45*tw) * igniteMul;
+      ctx.fillStyle = 'rgba('+col+','+alpha.toFixed(3)+')';
+      ctx.beginPath(); ctx.arc(x,y,p.size,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  if(reduced){
+    draw(0);
+  } else {
+    var rafId = null;
+    function loop(t){ draw(t); rafId = requestAnimationFrame(loop); }
+    rafId = requestAnimationFrame(loop);
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; } }
+      else if(!rafId){ rafId = requestAnimationFrame(loop); }
+    });
+  }
+})();
+</script>
+</body>
+</html>

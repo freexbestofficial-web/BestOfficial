@@ -7,4 +7,4 @@ Best — самый лучший. Самый блестящий, самый св
 
 Коснитесь слова — свет отзовётся.
 
-**[Смотреть →](https://bestofficial-standard.vercel.app)**
+**[Смотреть →](https://bestofficial.vercel.app)**
